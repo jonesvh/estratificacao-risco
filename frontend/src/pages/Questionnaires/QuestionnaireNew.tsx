@@ -56,7 +56,7 @@ const schema = z.object({
   riskConfig: z.object({
     thresholds: z.array(z.object({
       min: z.coerce.number(),
-      max: z.coerce.number(),
+      max: z.coerce.number().nullable(),
       level: z.string(),
       label: z.string().min(1),
     })),
@@ -77,7 +77,7 @@ export function QuestionnaireNewPage() {
       riskConfig: {
         thresholds: RISK_LEVELS.map((r, i) => ({
           level: r.key, label: r.label,
-          min: i * 10, max: i === RISK_LEVELS.length - 1 ? 999 : (i + 1) * 10 - 1,
+          min: i * 10, max: i === RISK_LEVELS.length - 1 ? null : (i + 1) * 10 - 1,
         })),
       },
       dimensions: [{ name: '', orderIndex: 0, questions: [] }],
@@ -140,7 +140,9 @@ export function QuestionnaireNewPage() {
                   <Input label="Label" {...register(`riskConfig.thresholds.${i}.label`)} />
                   <div className={styles.row}>
                     <Input label="Pontuação mín." type="number" {...register(`riskConfig.thresholds.${i}.min`)} />
-                    <Input label="Pontuação máx." type="number" {...register(`riskConfig.thresholds.${i}.max`)} />
+                    {r.key !== 'VERY_HIGH' && (
+                      <Input label="Pontuação máx." type="number" {...register(`riskConfig.thresholds.${i}.max`)} />
+                    )}
                   </div>
                 </div>
               ))}

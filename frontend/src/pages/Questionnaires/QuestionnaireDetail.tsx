@@ -77,7 +77,7 @@ export function QuestionnaireDetailPage() {
                   <RiskBadge level={t.level as RiskLevel} />
                   <div className={styles.thresholdRight}>
                     <div className={styles.thresholdName}>{t.label}</div>
-                    <div className={styles.thresholdRange}>{t.min} – {t.max} pts</div>
+                    <div className={styles.thresholdRange}>{t.max != null ? `${t.min} – ${t.max} pts` : `a partir de ${t.min} pts`}</div>
                   </div>
                 </div>
               ))}

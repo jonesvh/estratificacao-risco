@@ -61,7 +61,7 @@ const schema = z.object({
   riskConfig: z.object({
     thresholds: z.array(z.object({
       min: z.coerce.number(),
-      max: z.coerce.number(),
+      max: z.coerce.number().nullable(),
       level: z.string(),
       label: z.string().min(1, 'Label obrigatório'),
     })),
@@ -185,7 +185,9 @@ export function QuestionnaireEditPage() {
                   <Input label="Label" error={errors.riskConfig?.thresholds?.[i]?.label?.message} {...register(`riskConfig.thresholds.${i}.label`)} />
                   <div className={styles.row}>
                     <Input label="Pontuação mín." type="number" {...register(`riskConfig.thresholds.${i}.min`)} />
-                    <Input label="Pontuação máx." type="number" {...register(`riskConfig.thresholds.${i}.max`)} />
+                    {r.key !== 'VERY_HIGH' && (
+                      <Input label="Pontuação máx." type="number" {...register(`riskConfig.thresholds.${i}.max`)} />
+                    )}
                   </div>
                 </div>
               ))}

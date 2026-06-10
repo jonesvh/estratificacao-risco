@@ -9,7 +9,7 @@ const RISK_CONFIG = {
     { min: 0,  max: 34,  level: 'LOW',      label: 'Baixo Risco' },
     { min: 35, max: 60,  level: 'MEDIUM',   label: 'Risco Moderado' },
     { min: 61, max: 95,  level: 'HIGH',     label: 'Alto Risco' },
-    { min: 96, max: 227, level: 'VERY_HIGH', label: 'Muito Alto Risco' },
+    { min: 96, max: null, level: 'VERY_HIGH', label: 'Muito Alto Risco' },
   ],
 };
 
