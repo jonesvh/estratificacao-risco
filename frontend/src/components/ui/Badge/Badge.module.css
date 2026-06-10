@@ -1,0 +1,36 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.success { background-color: var(--color-risk-low-bg); color: var(--color-risk-low); }
+.success .dot { background-color: var(--color-risk-low); }
+
+.warning { background-color: var(--color-risk-medium-bg); color: #B45309; }
+.warning .dot { background-color: var(--color-risk-medium); }
+
+.danger { background-color: var(--color-danger-bg); color: var(--color-danger); }
+.danger .dot { background-color: var(--color-danger); }
+
+.info { background-color: var(--color-info-bg); color: var(--color-info); }
+.info .dot { background-color: var(--color-info); }
+
+.neutral { background-color: #F3F4F6; color: var(--color-text-secondary); }
+.neutral .dot { background-color: var(--color-text-muted); }
+
+.orange { background-color: var(--color-risk-high-bg); color: #C2410C; }
+.orange .dot { background-color: var(--color-risk-high); }

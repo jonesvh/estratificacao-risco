@@ -1,0 +1,82 @@
+:root {
+  /* Brand */
+  --color-primary: #00875A;
+  --color-primary-dark: #006845;
+  --color-primary-hover: #00764E;
+  --color-primary-light: #E8F5EF;
+  --color-primary-lighter: #F0FAF5;
+
+  /* Backgrounds */
+  --color-bg: #F4F6F5;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F9FAFB;
+
+  /* Borders */
+  --color-border: #E5E7EB;
+  --color-border-focus: #00875A;
+
+  /* Text */
+  --color-text: #111827;
+  --color-text-secondary: #6B7280;
+  --color-text-muted: #9CA3AF;
+  --color-text-on-primary: #FFFFFF;
+
+  /* Risk */
+  --color-risk-low: #10B981;
+  --color-risk-low-bg: #ECFDF5;
+  --color-risk-low-border: #A7F3D0;
+  --color-risk-medium: #F59E0B;
+  --color-risk-medium-bg: #FFFBEB;
+  --color-risk-medium-border: #FDE68A;
+  --color-risk-high: #F97316;
+  --color-risk-high-bg: #FFF7ED;
+  --color-risk-high-border: #FED7AA;
+  --color-risk-very-high: #EF4444;
+  --color-risk-very-high-bg: #FEF2F2;
+  --color-risk-very-high-border: #FECACA;
+
+  /* Status */
+  --color-danger: #EF4444;
+  --color-danger-bg: #FEF2F2;
+  --color-danger-hover: #DC2626;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-info: #3B82F6;
+  --color-info-bg: #EFF6FF;
+
+  /* Layout */
+  --sidebar-width: 240px;
+  --header-height: 64px;
+
+  /* Shape */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+
+  /* Transitions */
+  --transition-fast: 100ms ease;
+  --transition: 150ms ease;
+  --transition-slow: 250ms ease;
+
+  /* Z-index */
+  --z-dropdown: 100;
+  --z-modal: 200;
+  --z-toast: 300;
+}

@@ -1,0 +1,31 @@
+.shell { display: flex; min-height: 100vh; }
+
+.main {
+  margin-left: var(--sidebar-width);
+  padding-top: var(--header-height);
+  flex: 1;
+  min-width: 0;
+}
+
+.content {
+  padding: 28px;
+  min-height: calc(100vh - var(--header-height));
+}
+
+.backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 45;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition);
+}
+
+@media (max-width: 1024px) {
+  .main { margin-left: 0; }
+  .content { padding: 16px; }
+  .backdrop { display: block; }
+  .backdropVisible { opacity: 1; pointer-events: auto; }
+}

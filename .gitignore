@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+build/
+
+# Environment — NEVER commit secrets
+.env
+.env.local
+.env.*.local
+
+# Prisma dev database
+backend/prisma/migrations/dev.db
+backend/prisma/*.db
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+.dockerignore
+
+# Claude Code local settings
+.claude/

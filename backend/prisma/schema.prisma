@@ -1,0 +1,307 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ENUMS
+// ══════════════════════════════════════════════════════════════════════════════
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  NOT_INFORMED
+
+  @@map("gender")
+}
+
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  BOOLEAN
+  NUMERIC
+  TEXT
+
+  @@map("question_type")
+}
+
+enum RiskLevel {
+  LOW        // Baixo Risco
+  MEDIUM     // Médio Risco
+  HIGH       // Alto Risco
+  VERY_HIGH  // Muito Alto Risco
+
+  @@map("risk_level")
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// USER
+// Usuário único administrador. Criado via seed, sem endpoint de cadastro.
+// ══════════════════════════════════════════════════════════════════════════════
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  responses QuestionnaireResponse[]
+
+  @@map("users")
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// BENEFICIARY
+// Beneficiário do plano de saúde. CPF é a chave de negócio.
+// planCode permite filtrar por contrato/operadora no futuro.
+// ══════════════════════════════════════════════════════════════════════════════
+
+model Beneficiary {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String    @db.VarChar(255)
+  cpf       String    @unique @db.Char(11)
+  birthDate DateTime  @map("birth_date") @db.Date
+  gender    Gender?
+  phone     String?   @db.VarChar(20)
+  email     String?   @db.VarChar(255)
+  planCode  String?   @map("plan_code") @db.VarChar(50)
+  municipio String?   @db.VarChar(100)
+  estado    String?   @db.Char(2)
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  responses QuestionnaireResponse[]
+
+  @@index([planCode])
+  @@index([isActive])
+  @@index([name])
+  @@map("beneficiaries")
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// QUESTIONNAIRE
+// Template do questionário. Imutável após ter respostas vinculadas.
+// riskConfig (JSON) define as faixas de pontuação para cada nível de risco.
+//
+// Exemplo de riskConfig:
+// {
+//   "thresholds": [
+//     { "min": 0,  "max": 10, "level": "LOW",       "label": "Baixo Risco"      },
+//     { "min": 11, "max": 25, "level": "MEDIUM",    "label": "Médio Risco"      },
+//     { "min": 26, "max": 40, "level": "HIGH",      "label": "Alto Risco"       },
+//     { "min": 41, "max": 999,"level": "VERY_HIGH", "label": "Muito Alto Risco" }
+//   ]
+// }
+// ══════════════════════════════════════════════════════════════════════════════
+
+model Questionnaire {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  version     Int      @default(1)
+  isActive    Boolean  @default(true) @map("is_active")
+  riskConfig  Json     @map("risk_config")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  dimensions Dimension[]
+  questions  Question[]
+  responses  QuestionnaireResponse[]
+
+  @@index([isActive])
+  @@map("questionnaires")
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DIMENSION
+// Agrupamento temático de perguntas (ex: Cardiovascular, Metabólico, Comportamental).
+// Permite calcular pontuação por dimensão além da pontuação total.
+// weight define o peso desta dimensão no cálculo do score total ponderado.
+// ══════════════════════════════════════════════════════════════════════════════
+
+model Dimension {
+  id              String   @id @default(uuid()) @db.Uuid
+  questionnaireId String   @map("questionnaire_id") @db.Uuid
+  name            String   @db.VarChar(255)
+  description     String?  @db.Text
+  orderIndex      Int      @map("order_index")
+  weight          Decimal  @default(1.00) @db.Decimal(5, 2)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  questionnaire   Questionnaire    @relation(fields: [questionnaireId], references: [id], onDelete: Restrict)
+  questions       Question[]
+  dimensionScores DimensionScore[]
+
+  @@index([questionnaireId, orderIndex])
+  @@map("dimensions")
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// QUESTION
+// Pergunta individual dentro de um questionário.
+// dimensionId é opcional — perguntas podem existir sem dimensão (ex: abertas).
+// weight define o peso desta pergunta no score da dimensão.
+// metadata (JSON) contém configuração específica por tipo:
+//   NUMERIC → { "min": 0, "max": 100, "unit": "kg", "scoreRanges": [...] }
+//   TEXT    → { "maxLength": 500 }
+// ══════════════════════════════════════════════════════════════════════════════
+
+model Question {
+  id              String       @id @default(uuid()) @db.Uuid
+  questionnaireId String       @map("questionnaire_id") @db.Uuid
+  dimensionId     String?      @map("dimension_id") @db.Uuid
+  text            String       @db.Text
+  type            QuestionType
+  orderIndex      Int          @map("order_index")
+  isRequired      Boolean      @default(true) @map("is_required")
+  weight          Decimal      @default(1.00) @db.Decimal(5, 2)
+  helpText        String?      @map("help_text") @db.Text
+  metadata        Json?
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  questionnaire Questionnaire    @relation(fields: [questionnaireId], references: [id], onDelete: Restrict)
+  dimension     Dimension?       @relation(fields: [dimensionId], references: [id], onDelete: SetNull)
+  options       QuestionOption[]
+  answers       Answer[]
+
+  @@index([questionnaireId, orderIndex])
+  @@index([dimensionId])
+  @@map("questions")
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// QUESTION OPTION
+// Opções de resposta para SINGLE_CHOICE e MULTIPLE_CHOICE.
+// score é o valor pontual desta opção no cálculo de risco.
+// ══════════════════════════════════════════════════════════════════════════════
+
+model QuestionOption {
+  id         String   @id @default(uuid()) @db.Uuid
+  questionId String   @map("question_id") @db.Uuid
+  label      String   @db.VarChar(500)
+  value      String   @db.VarChar(100)
+  score      Decimal  @default(0.00) @db.Decimal(8, 2)
+  orderIndex Int      @map("order_index")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  question         Question               @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answerSelections AnswerSelectedOption[]
+
+  @@index([questionId, orderIndex])
+  @@map("question_options")
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// QUESTIONNAIRE RESPONSE
+// Evento de aplicação de um questionário a um beneficiário.
+// totalScore e riskLevel são snapshot calculados no momento da aplicação.
+// metadata (JSON) para extensibilidade futura sem schema change.
+// ══════════════════════════════════════════════════════════════════════════════
+
+model QuestionnaireResponse {
+  id              String    @id @default(uuid()) @db.Uuid
+  beneficiaryId   String    @map("beneficiary_id") @db.Uuid
+  questionnaireId String    @map("questionnaire_id") @db.Uuid
+  appliedById     String    @map("applied_by_id") @db.Uuid
+  appliedAt       DateTime  @default(now()) @map("applied_at") @db.Timestamptz(6)
+  totalScore      Decimal   @map("total_score") @db.Decimal(10, 2)
+  riskLevel       RiskLevel @map("risk_level")
+  notes           String?   @db.Text
+  medicacoes      String?   @db.Text
+  metadata        Json?
+
+  beneficiary     Beneficiary     @relation(fields: [beneficiaryId], references: [id], onDelete: Restrict)
+  questionnaire   Questionnaire   @relation(fields: [questionnaireId], references: [id], onDelete: Restrict)
+  appliedBy       User            @relation(fields: [appliedById], references: [id], onDelete: Restrict)
+  answers         Answer[]
+  dimensionScores DimensionScore[]
+
+  @@index([beneficiaryId])
+  @@index([questionnaireId])
+  @@index([appliedById])
+  @@index([appliedAt])
+  @@index([riskLevel])
+  @@index([beneficiaryId, appliedAt])   // histórico ordenado por beneficiário
+  @@index([questionnaireId, riskLevel]) // relatórios por questionário e risco
+  @@map("questionnaire_responses")
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ANSWER
+// Resposta individual a uma pergunta dentro de uma QuestionnaireResponse.
+// scoreSnapshot é o score calculado e congelado no momento da aplicação.
+// textValue armazena o valor textual bruto para tipos TEXT e NUMERIC.
+// Para SINGLE_CHOICE e MULTIPLE_CHOICE, as opções ficam em AnswerSelectedOption.
+// Constraint UNIQUE em (responseId, questionId): uma resposta por pergunta.
+// ══════════════════════════════════════════════════════════════════════════════
+
+model Answer {
+  id            String   @id @default(uuid()) @db.Uuid
+  responseId    String   @map("response_id") @db.Uuid
+  questionId    String   @map("question_id") @db.Uuid
+  textValue     String?  @map("text_value") @db.Text
+  scoreSnapshot Decimal  @map("score_snapshot") @db.Decimal(8, 2)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  response        QuestionnaireResponse  @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  question        Question               @relation(fields: [questionId], references: [id], onDelete: Restrict)
+  selectedOptions AnswerSelectedOption[]
+
+  @@unique([responseId, questionId])
+  @@index([responseId])
+  @@index([questionId])
+  @@map("answers")
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ANSWER SELECTED OPTION
+// Tabela de junção entre Answer e QuestionOption.
+// Necessária para suportar MULTIPLE_CHOICE (N opções por resposta).
+// Para SINGLE_CHOICE, haverá exatamente 1 registro nesta tabela por Answer.
+// ══════════════════════════════════════════════════════════════════════════════
+
+model AnswerSelectedOption {
+  answerId String @map("answer_id") @db.Uuid
+  optionId String @map("option_id") @db.Uuid
+
+  answer Answer         @relation(fields: [answerId], references: [id], onDelete: Cascade)
+  option QuestionOption @relation(fields: [optionId], references: [id], onDelete: Restrict)
+
+  @@id([answerId, optionId])
+  @@index([optionId])
+  @@map("answer_selected_options")
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DIMENSION SCORE
+// Score por dimensão para uma QuestionnaireResponse.
+// Armazenado como snapshot — não recalculado on-the-fly.
+// percentage = (score / maxScore) * 100, facilita relatórios sem divisão em runtime.
+// maxScore é o score máximo possível para a dimensão naquele questionário.
+// ══════════════════════════════════════════════════════════════════════════════
+
+model DimensionScore {
+  id          String   @id @default(uuid()) @db.Uuid
+  responseId  String   @map("response_id") @db.Uuid
+  dimensionId String   @map("dimension_id") @db.Uuid
+  score       Decimal  @db.Decimal(10, 2)
+  maxScore    Decimal  @map("max_score") @db.Decimal(10, 2)
+  percentage  Decimal  @db.Decimal(5, 2)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  response  QuestionnaireResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  dimension Dimension             @relation(fields: [dimensionId], references: [id], onDelete: Restrict)
+
+  @@unique([responseId, dimensionId])
+  @@index([responseId])
+  @@index([dimensionId])
+  @@map("dimension_scores")
+}

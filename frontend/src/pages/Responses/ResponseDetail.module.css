@@ -1,0 +1,120 @@
+.topBar { display: flex; gap: 10px; margin-bottom: 24px; }
+
+.grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+  align-items: start;
+}
+
+@media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+
+.resultCard {
+  background: linear-gradient(135deg, var(--color-primary-light), #fff);
+  border: 2px solid var(--color-primary-light);
+  border-radius: var(--radius-xl);
+  padding: 32px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.resultLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.score {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.infoGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.infoItem { display: flex; flex-direction: column; gap: 3px; }
+
+.infoLabel {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.infoValue { font-size: var(--font-size-sm); color: var(--color-text); }
+
+.dimensionScores { display: flex; flex-direction: column; gap: 14px; }
+
+.dimScoreRow { display: flex; align-items: center; gap: 12px; }
+
+.dimScoreInfo { display: flex; flex-direction: column; gap: 2px; min-width: 180px; }
+
+.dimName { font-size: var(--font-size-sm); font-weight: 500; color: var(--color-text); }
+.dimScore { font-size: var(--font-size-xs); color: var(--color-text-secondary); }
+
+.progressBar {
+  flex: 1;
+  height: 8px;
+  background-color: var(--color-border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  width: var(--fill-width, 0%);
+  background-color: var(--color-primary);
+  border-radius: var(--radius-full);
+  transition: width 0.6s ease;
+}
+
+.dimPercent { font-size: var(--font-size-sm); font-weight: 600; color: var(--color-primary); min-width: 44px; text-align: right; }
+
+.answerRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.answerRow:last-child { border-bottom: none; }
+
+.answerNum {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.answerContent { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+
+.answerQuestion { font-size: var(--font-size-sm); font-weight: 500; color: var(--color-text); }
+
+.answerValue { font-size: var(--font-size-sm); color: var(--color-text-secondary); }
+
+.answerScore { font-size: var(--font-size-sm); font-weight: 600; color: var(--color-primary); white-space: nowrap; }
+
+.noPadding { padding: 0; }
+
+@media (max-width: 768px) {
+  .resultCard { padding: 24px 20px; }
+  .infoGrid { grid-template-columns: 1fr; }
+  .dimScoreInfo { min-width: 120px; }
+  .dimScoreRow { flex-wrap: wrap; gap: 8px; }
+  .answerRow { padding: 12px 14px; gap: 10px; }
+  .topBar { flex-wrap: wrap; }
+}

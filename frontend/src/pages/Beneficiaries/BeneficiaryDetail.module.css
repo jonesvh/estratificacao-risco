@@ -1,0 +1,54 @@
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.grid { margin-bottom: 24px; }
+
+.dataGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.dataItem { display: flex; flex-direction: column; gap: 3px; }
+
+.dataLabel {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dataValue { font-size: var(--font-size-sm); color: var(--color-text); }
+
+.headerActions { display: flex; gap: 10px; align-items: center; }
+
+.inlineIcon { display: inline; margin-right: 6px; vertical-align: middle; }
+
+.historyCount { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+
+.noPadding { padding: 0; }
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.errorText {
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+  .dataGrid { grid-template-columns: 1fr; }
+  .formGrid { grid-template-columns: 1fr; }
+  .headerActions { flex-wrap: wrap; }
+}
