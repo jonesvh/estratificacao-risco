@@ -28,7 +28,7 @@ const dimensionSchema = z.object({
 
 const riskThresholdSchema = z.object({
   min: z.number(),
-  max: z.number(),
+  max: z.number().nullable(),
   level: z.enum(['LOW', 'MEDIUM', 'HIGH', 'VERY_HIGH']),
   label: z.string().min(1),
 });
