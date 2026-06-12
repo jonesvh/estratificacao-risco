@@ -1,4 +1,5 @@
-import { QuestionType, RiskLevel } from '@prisma/client';
+export type QuestionType = 'SINGLE_CHOICE' | 'MULTIPLE_CHOICE' | 'BOOLEAN' | 'NUMERIC' | 'TEXT';
+export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'VERY_HIGH';
 
 interface OptionScore {
   id: string;
@@ -130,12 +131,14 @@ export function computeDimensionScores(
   });
 }
 
+const VALID_RISK_LEVELS: readonly RiskLevel[] = ['LOW', 'MEDIUM', 'HIGH', 'VERY_HIGH'];
+
 export function classifyRisk(totalScore: number, riskConfig: RiskConfig): RiskLevel {
   const sorted = [...riskConfig.thresholds].sort((a, b) => b.min - a.min);
   const match = sorted.find((t) => totalScore >= t.min);
-  if (!match) return RiskLevel.LOW;
-  const level = match.level.toUpperCase() as keyof typeof RiskLevel;
-  return RiskLevel[level] ?? RiskLevel.LOW;
+  if (!match) return 'LOW';
+  const level = match.level.toUpperCase() as RiskLevel;
+  return VALID_RISK_LEVELS.includes(level) ? level : 'LOW';
 }
 
 function round2(n: number): number {

@@ -17,7 +17,6 @@ export async function exportResponsesXlsx(filters: ExportFilters): Promise<void>
   const response = await axios.get('/api/export/responses', {
     params,
     responseType: 'blob',
-    withCredentials: true,
   });
 
   const filename =

@@ -1,48 +1,21 @@
 #!/bin/sh
 set -e
 
-PRISMA="./node_modules/.bin/prisma"
+DB_PATH="${JSON_DB_PATH:-/app/MEDPREV/db.json}"
+DB_DIR="$(dirname "$DB_PATH")"
 
-# ── 1. Migrate ────────────────────────────────────────────────────────────────
-echo "[entrypoint] Running database migrations..."
-$PRISMA migrate deploy
+# ── 1. Ensure MEDPREV directory exists ────────────────────────────────────────
+mkdir -p "$DB_DIR"
 
-# ── 2. Seed admin user ────────────────────────────────────────────────────────
-echo "[entrypoint] Running admin seed..."
-node -e "
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
-const prisma = new PrismaClient();
+# ── 2. Initialize db.json if it doesn't exist ─────────────────────────────────
+if [ ! -f "$DB_PATH" ]; then
+  echo "[entrypoint] Initializing database at $DB_PATH..."
+  node scripts/seed-json.js
+  echo "[entrypoint] Database initialized."
+else
+  echo "[entrypoint] Database already exists at $DB_PATH — skipping seed."
+fi
 
-async function seed() {
-  const email    = process.env.ADMIN_EMAIL;
-  const password = process.env.ADMIN_PASSWORD;
-
-  if (!email || !password) {
-    console.log('[seed] ADMIN_EMAIL / ADMIN_PASSWORD not set — skipping.');
-    return;
-  }
-
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    console.log('[seed] Admin already exists:', email);
-    return;
-  }
-
-  const passwordHash = await bcrypt.hash(password, 12);
-  await prisma.user.create({ data: { email, passwordHash } });
-  console.log('[seed] Admin created:', email);
-}
-
-seed()
-  .catch(e => { console.error('[seed] Error:', e.message); process.exit(1); })
-  .finally(() => prisma.\$disconnect());
-"
-
-# ── 3. Seed questionnaire ─────────────────────────────────────────────────────
-echo "[entrypoint] Running questionnaire seed..."
-node prisma/seeds/questionnaire.seed.js
-
-# ── 4. Start server ───────────────────────────────────────────────────────────
+# ── 3. Start server ───────────────────────────────────────────────────────────
 echo "[entrypoint] Starting server..."
 exec node dist/main.js

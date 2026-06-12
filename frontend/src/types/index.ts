@@ -105,7 +105,6 @@ export interface QuestionnaireResponse {
   id: string;
   beneficiaryId: string;
   questionnaireId: string;
-  appliedById: string;
   appliedAt: string;
   totalScore: number;
   riskLevel: RiskLevel;
@@ -113,7 +112,6 @@ export interface QuestionnaireResponse {
   medicacoes?: string;
   beneficiary: Pick<Beneficiary, 'id' | 'name' | 'cpf'> & { planCode?: string };
   questionnaire: Pick<Questionnaire, 'id' | 'title'>;
-  appliedBy: { email: string };
   dimensionScores: DimensionScore[];
   answers?: Answer[];
 }

@@ -51,7 +51,6 @@ export function ResponseDetailPage() {
               <InfoItem label="CPF" value={formatCPF(r.beneficiary.cpf)} />
               <InfoItem label="Questionário" value={r.questionnaire.title} />
               <InfoItem label="Aplicado em" value={formatDateTime(r.appliedAt)} />
-              <InfoItem label="Aplicado por" value={r.appliedBy.email} />
               {r.medicacoes && <InfoItem label="Medicações em uso" value={r.medicacoes} />}
               {r.notes && <InfoItem label="Observações clínicas" value={r.notes} />}
             </div>

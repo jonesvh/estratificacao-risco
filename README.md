@@ -2,11 +2,61 @@
 
 Sistema web para aplicação de questionários de estratificação de risco em beneficiários de operadora de saúde. Permite cadastrar beneficiários, aplicar questionários, calcular classificação de risco automaticamente e exportar os dados em XLSX.
 
-**Stack:** React · TypeScript · Node.js/Express · PostgreSQL · Nginx · Docker
+**Stack:** React · TypeScript · Node.js/Express · JSON file store · Nginx · Docker
 
 ---
 
-## Pré-requisitos
+## Modos de implantação
+
+| Modo | Quando usar |
+|---|---|
+| **Windows direto** (recomendado) | Servidor Windows sem Docker — clonar e executar um `.bat` |
+| **Docker** | Servidor Linux com Docker instalado |
+
+---
+
+## Modo Windows (sem Docker)
+
+### Pré-requisitos
+
+- [Node.js LTS 20+](https://nodejs.org/en/download) instalado no servidor
+- Git
+
+### Início rápido
+
+```bat
+git clone https://github.com/jonesvh/estratificacao-risco.git
+cd estratificacao-risco
+start.bat
+```
+
+O script `start.bat` faz tudo automaticamente:
+
+1. Verifica se o Node.js está instalado
+2. Instala as dependências do backend e do frontend
+3. Compila backend (TypeScript → JS) e frontend (Vite build)
+4. Cria `MEDPREV\db.json` com o questionário inicial (apenas na primeira execução)
+5. Inicia o servidor na porta **6001**
+
+Aguarde a mensagem `Sistema pronto!` e acesse `http://192.168.1.250:6001` no navegador.
+
+### Parar o servidor
+
+Pressione `Ctrl+C` na janela do terminal.
+
+### Atualizar após `git pull`
+
+Execute `start.bat` novamente. O banco de dados existente (`MEDPREV\db.json`) é preservado.
+
+### Dados
+
+Os dados ficam em `MEDPREV\db.json`, na raiz do projeto. Faça cópias regulares desse arquivo para backup.
+
+---
+
+## Modo Docker
+
+### Pré-requisitos
 
 | Requisito | Versão mínima |
 |---|---|
@@ -14,146 +64,70 @@ Sistema web para aplicação de questionários de estratificação de risco em b
 | Docker Compose plugin | v2 (`docker compose`, sem hífen) |
 | Git | qualquer |
 
-A porta **80** do servidor deve estar livre (configurável via `HTTP_PORT`).
-
----
-
-## Início rápido
+### Início rápido
 
 ```bash
 git clone https://github.com/jonesvh/estratificacao-risco.git
 cd estratificacao-risco
-cp .env.example .env
-```
-
-Abra o `.env` e preencha as variáveis obrigatórias (ver seção abaixo), depois:
-
-```bash
 docker compose up -d
 ```
 
-Na primeira execução o Docker vai compilar as imagens — aguarde ~2 minutos. Quando todos os containers estiverem saudáveis, acesse `http://IP_DO_SERVIDOR` no navegador.
+Na primeira execução as imagens são compiladas — aguarde ~2 minutos. Quando os containers estiverem saudáveis, acesse `http://192.168.1.250:6001`.
 
----
+### Configuração do `.env`
 
-## Configuração do `.env`
+| Variável | Padrão | Descrição |
+|---|---|---|
+| `NODE_ENV` | `production` | Manter `production` em produção |
+| `HTTP_PORT` | `6001` | Porta exposta pelo nginx no host |
+| `CORS_ORIGIN` | `http://192.168.1.250:6001` | URL de acesso dos usuários |
+| `LOG_LEVEL` | `info` | Nível de log: `trace` · `debug` · `info` · `warn` · `error` |
 
-Copie `.env.example` para `.env` e edite os valores. As variáveis marcadas como **obrigatórias** causam erro de inicialização se estiverem com o valor padrão do exemplo.
+### O que acontece na primeira inicialização
 
-| Variável | Obrigatória | Padrão | Descrição |
-|---|:---:|---|---|
-| `NODE_ENV` | — | `production` | Manter `production` em produção |
-| `HTTP_PORT` | — | `80` | Porta do host exposta pelo nginx |
-| `POSTGRES_DB` | — | `estratificacao` | Nome do banco de dados |
-| `POSTGRES_USER` | — | `eruser` | Usuário do PostgreSQL |
-| `POSTGRES_PASSWORD` | **sim** | — | Senha do banco — use letras, números e `!`, `_`, `-` (não use `@` ou `#`) |
-| `JWT_SECRET` | **sim** | — | Chave JWT, mínimo 32 caracteres |
-| `JWT_EXPIRES_IN` | — | `8h` | Validade do token de sessão |
-| `ADMIN_EMAIL` | **sim** | — | E-mail do administrador |
-| `ADMIN_PASSWORD` | **sim** | — | Senha do administrador |
-| `CORS_ORIGIN` | — | `http://localhost` | URL de acesso dos usuários (ex: `https://app.empresa.com`) |
-| `LOG_LEVEL` | — | `info` | Nível de log: `trace` · `debug` · `info` · `warn` · `error` |
+1. O backend verifica se `MEDPREV/db.json` existe
+2. Se não existir, executa `seed-json.js` — cria o questionário padrão
+3. O servidor inicia na porta 4000 (interna); o nginx expõe na porta configurada em `HTTP_PORT`
 
-### Gerar um JWT_SECRET seguro
+### Arquitetura dos containers
 
-```bash
-openssl rand -hex 32
+```
+Internet
+    │
+    ▼
+er_nginx  (:6001 no host)
+    ├── /api/*   ──▶  er_backend  (:4000 interno)
+    └── /*       ──▶  er_frontend  (:80 interno)
 ```
 
-Cole o resultado no campo `JWT_SECRET` do `.env`.
+Os dados são persistidos em `./MEDPREV/db.json` (volume montado no host).
 
----
-
-## O que acontece na primeira inicialização
-
-Ao subir pela primeira vez, o backend executa automaticamente:
-
-1. **Migração do banco** — cria todas as tabelas via `prisma migrate deploy`
-2. **Seed do administrador** — cria o usuário com `ADMIN_EMAIL` / `ADMIN_PASSWORD` (operação idempotente; se já existir, ignora)
-3. **Seed do questionário** — insere o questionário padrão de estratificação de risco (idempotente)
-4. **Início do servidor** — API disponível na porta 4000 (interna)
-
-O PostgreSQL passa por um healthcheck antes de o backend iniciar; nas primeiras execuções isso pode levar até 30 segundos.
-
----
-
-## Verificar se está funcionando
+### Verificar se está funcionando
 
 ```bash
-# Ver status dos 4 containers
 docker compose ps
 
-# Acompanhar logs do backend (inclui output do entrypoint)
+# Logs do backend
 docker compose logs backend --tail=50
 
-# Logs em tempo real de todos os serviços
+# Logs em tempo real
 docker compose logs -f
 ```
-
-Todos os containers devem estar com status `running` ou `healthy`:
 
 | Container | Status esperado |
 |---|---|
 | `er_nginx` | running |
 | `er_frontend` | running |
 | `er_backend` | healthy |
-| `er_postgres` | healthy |
 
----
-
-## Primeiro acesso
-
-- **URL:** `http://IP_DO_SERVIDOR` (ou o domínio configurado em `CORS_ORIGIN`)
-- **Login:** e-mail e senha definidos em `ADMIN_EMAIL` / `ADMIN_PASSWORD`
-
----
-
-## Arquitetura dos containers
-
-```
-Internet
-    │
-    ▼
-er_nginx  (:80 no host)
-    ├── /api/*   ──▶  er_backend  (:4000 interno)
-    │                      │
-    │                      ▼
-    │               er_postgres  (:5432 interno)
-    │
-    └── /*       ──▶  er_frontend  (:80 interno)
-```
-
-Apenas o `er_nginx` expõe porta no host. Os demais serviços comunicam-se pela rede interna `er_internal` e não são acessíveis diretamente de fora.
-
-Os dados do PostgreSQL são persistidos no volume Docker `postgres_data`.
-
----
-
-## Domínio próprio e HTTPS
-
-1. Aponte o DNS do domínio para o IP do servidor
-2. Altere `CORS_ORIGIN=https://seu.dominio.com` no `.env`
-3. Reinicie: `docker compose up -d`
-
-Para HTTPS, coloque um proxy com terminação TLS na frente da porta 80. Opções:
-
-- **Caddy** (mais simples, HTTPS automático via Let's Encrypt)
-- **Nginx externo** com Certbot
-- **Cloudflare Tunnel** (não exige abrir porta no firewall)
-
----
-
-## Comandos úteis
+### Comandos úteis
 
 ```bash
 # Subir em background
 docker compose up -d
 
-# Parar sem remover volumes
+# Parar sem remover dados
 docker compose down
-
-# Parar e remover TODOS os dados (cuidado — apaga o banco)
-docker compose down -v
 
 # Rebuild após atualizar o código
 git pull
@@ -163,65 +137,69 @@ docker compose up -d
 # Reiniciar um serviço específico
 docker compose restart backend
 
-# Acessar o shell do container do backend
+# Shell do container do backend
 docker exec -it er_backend sh
-
-# Abrir o Prisma Studio (visualizar o banco — use com cautela em prod)
-docker exec -it er_backend ./node_modules/.bin/prisma studio
 ```
 
 ---
 
-## Backup do banco de dados
+## Banco de dados (JSON)
 
-```bash
-# Criar dump
-docker exec er_postgres pg_dump -U eruser estratificacao > backup_$(date +%Y%m%d_%H%M).sql
+O sistema armazena todos os dados em um único arquivo JSON: `MEDPREV/db.json`.
 
-# Restaurar dump
-cat backup_YYYYMMDD_HHMM.sql | docker exec -i er_postgres psql -U eruser -d estratificacao
+- **Sem PostgreSQL, sem configuração de banco**
+- O arquivo é criado automaticamente na primeira execução (via `start.bat` ou `entrypoint.sh`)
+- Nunca commite `MEDPREV/db.json` no git — ele contém dados de produção
+
+### Backup
+
+Copie o arquivo `MEDPREV/db.json` regularmente para armazenamento externo.
+
+No Windows, um script simples para agendar com o Agendador de Tarefas:
+
+```bat
+copy MEDPREV\db.json MEDPREV\backup\db_%date:~-4,4%%date:~-7,2%%date:~0,2%.json
 ```
-
-Recomenda-se automatizar o dump com cron e enviar para armazenamento externo (S3, Google Drive, etc.).
 
 ---
 
 ## Resolução de problemas
 
-### Container `er_backend` em estado `restarting`
+### `start.bat` não abre ou fecha imediatamente
+
+Execute via `cmd.exe` para ver a mensagem de erro:
+
+```
+Iniciar → cmd → cd C:\caminho\do\projeto → start.bat
+```
+
+### `Node.js nao encontrado`
+
+Instale o Node.js LTS em https://nodejs.org/en/download e execute `start.bat` novamente.
+
+### Falha na compilação do backend ou frontend
+
+Verifique a conexão com a internet — `npm install` precisa baixar pacotes na primeira execução. Em redes restritas, configure o proxy do npm:
+
+```bat
+npm config set proxy http://proxy.empresa.com:porta
+npm config set https-proxy http://proxy.empresa.com:porta
+```
+
+### Porta 6001 já está em uso
+
+No `start.bat`, altere a linha `set PORT=6001` para outra porta e atualize a linha `set CORS_ORIGIN=` com a nova porta.
+
+### Container `er_backend` em estado `restarting` (Docker)
+
 ```bash
 docker compose logs backend
 ```
-Causas comuns: variável obrigatória ausente no `.env`, banco ainda iniciando (aguarde ~30s e tente novamente), erro de compilação.
 
-### `POSTGRES_PASSWORD is required`
-O arquivo `.env` não foi criado ou está faltando a variável. Verifique:
-```bash
-cat .env | grep POSTGRES_PASSWORD
-```
+Causa comum: erro na compilação ou caminho do volume `MEDPREV` sem permissão de escrita.
 
-### Porta 80 já está em uso
-Altere `HTTP_PORT` no `.env` para outra porta (ex: `8080`) e reinicie:
-```bash
-docker compose down && docker compose up -d
-```
+### Resetar o banco de dados
 
-### Banco não conecta após restart
-O volume `postgres_data` existe, mas o banco pode levar alguns segundos para estar pronto. Aguarde o healthcheck passar:
-```bash
-docker compose ps   # coluna STATUS deve mostrar "healthy"
-```
+Apague (ou renomeie) o arquivo `MEDPREV\db.json` e execute `start.bat` novamente — o questionário padrão será recriado do zero.
 
-### Mudanças no código não aparecem
-Alterações no código-fonte exigem rebuild da imagem:
-```bash
-docker compose build backend   # ou frontend
-docker compose up -d
-```
-
-### Resetar tudo e começar do zero
-```bash
-docker compose down -v          # remove containers + volumes
-docker compose up -d            # recria tudo do zero
-```
-> **Atenção:** o comando acima apaga todos os dados do banco.
+> **Atenção:** todos os beneficiários e respostas serão perdidos.

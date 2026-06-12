@@ -1,7 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ProtectedRoute } from './components/layout/ProtectedRoute';
-import { LoginPage } from './pages/Login/Login';
 import { DashboardPage } from './pages/Dashboard/Dashboard';
 import { QuestionnaireListPage } from './pages/Questionnaires/QuestionnaireList';
 import { QuestionnaireDetailPage } from './pages/Questionnaires/QuestionnaireDetail';
@@ -28,23 +26,18 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
-          <Route path="/login" element={<LoginPage />} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-
-          <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/questionnaires" element={<QuestionnaireListPage />} />
-            <Route path="/questionnaires/new" element={<QuestionnaireNewPage />} />
-            <Route path="/questionnaires/:id" element={<QuestionnaireDetailPage />} />
-            <Route path="/questionnaires/:id/edit" element={<QuestionnaireEditPage />} />
-            <Route path="/beneficiaries" element={<BeneficiaryListPage />} />
-            <Route path="/beneficiaries/:id" element={<BeneficiaryDetailPage />} />
-            <Route path="/responses" element={<ResponseListPage />} />
-            <Route path="/responses/apply" element={<ResponseApplyPage />} />
-            <Route path="/responses/:id" element={<ResponseDetailPage />} />
-            <Route path="/export" element={<ExportPage />} />
-          </Route>
-
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/questionnaires" element={<QuestionnaireListPage />} />
+          <Route path="/questionnaires/new" element={<QuestionnaireNewPage />} />
+          <Route path="/questionnaires/:id" element={<QuestionnaireDetailPage />} />
+          <Route path="/questionnaires/:id/edit" element={<QuestionnaireEditPage />} />
+          <Route path="/beneficiaries" element={<BeneficiaryListPage />} />
+          <Route path="/beneficiaries/:id" element={<BeneficiaryDetailPage />} />
+          <Route path="/responses" element={<ResponseListPage />} />
+          <Route path="/responses/apply" element={<ResponseApplyPage />} />
+          <Route path="/responses/:id" element={<ResponseDetailPage />} />
+          <Route path="/export" element={<ExportPage />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>

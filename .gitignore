@@ -12,9 +12,8 @@ build/
 .env.local
 .env.*.local
 
-# Prisma dev database
-backend/prisma/migrations/dev.db
-backend/prisma/*.db
+# JSON database (contains real data, must not be committed)
+MEDPREV/db.json
 
 # Logs
 *.log

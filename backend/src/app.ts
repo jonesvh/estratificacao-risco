@@ -1,11 +1,10 @@
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
-import cookieParser from 'cookie-parser';
+import { existsSync } from 'fs';
+import path from 'path';
 import { env } from './config/env';
-import { requireAuth } from './shared/middleware/auth.middleware';
 import { errorHandler } from './shared/middleware/error.middleware';
-import { authRouter } from './modules/auth/auth.router';
 import { beneficiariesRouter } from './modules/beneficiaries/beneficiaries.router';
 import { questionnairesRouter } from './modules/questionnaires/questionnaires.router';
 import { responsesRouter } from './modules/responses/responses.router';
@@ -20,7 +19,7 @@ export function buildApp() {
   app.use(
     cors({
       origin: env.CORS_ORIGIN,
-      credentials: true, // required for cookies
+      credentials: false,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type'],
     }),
@@ -28,27 +27,34 @@ export function buildApp() {
 
   // Parsers
   app.use(express.json({ limit: '1mb' }));
-  app.use(cookieParser());
 
-  // Health check (unauthenticated)
+  // Health check
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
-  // Public routes
-  app.use('/api/auth', authRouter);
+  // API routes (all public — no auth)
+  app.use('/api/beneficiaries', beneficiariesRouter);
+  app.use('/api/questionnaires', questionnairesRouter);
+  app.use('/api/responses', responsesRouter);
+  app.use('/api/dashboard', dashboardRouter);
+  app.use('/api/export', exportRouter);
 
-  // Protected routes
-  app.use('/api/beneficiaries', requireAuth, beneficiariesRouter);
-  app.use('/api/questionnaires', requireAuth, questionnairesRouter);
-  app.use('/api/responses', requireAuth, responsesRouter);
-  app.use('/api/dashboard', requireAuth, dashboardRouter);
-  app.use('/api/export', requireAuth, exportRouter);
-
-  // 404
-  app.use((_req, res) => {
-    res.status(404).json({ error: 'Rota não encontrada' });
-  });
+  // Frontend SPA (only when FRONTEND_DIST_PATH is set — direct Node.js mode, no nginx)
+  if (env.FRONTEND_DIST_PATH) {
+    const distPath = path.resolve(env.FRONTEND_DIST_PATH);
+    if (existsSync(distPath)) {
+      app.use(express.static(distPath));
+      app.get('*', (_req, res) => {
+        res.sendFile(path.join(distPath, 'index.html'));
+      });
+    }
+  } else {
+    // 404 for API-only mode (Docker + nginx)
+    app.use((_req, res) => {
+      res.status(404).json({ error: 'Rota não encontrada' });
+    });
+  }
 
   // Global error handler (must be last)
   app.use(errorHandler);

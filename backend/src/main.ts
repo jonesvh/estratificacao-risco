@@ -1,6 +1,5 @@
 import { buildApp } from './app';
 import { env } from './config/env';
-import { prisma } from './config/database';
 import { logger } from './shared/utils/logger';
 
 const app = buildApp();
@@ -11,8 +10,7 @@ const server = app.listen(env.PORT, () => {
 
 async function shutdown(signal: string) {
   logger.info({ signal }, 'Shutdown signal received');
-  server.close(async () => {
-    await prisma.$disconnect();
+  server.close(() => {
     logger.info('Server closed');
     process.exit(0);
   });

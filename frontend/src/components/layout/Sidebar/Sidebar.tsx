@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '../../../utils/cn';
-import { useAuth } from '../../../hooks/useAuth';
 import logo from '../../../assets/logo.png';
 import styles from './Sidebar.module.css';
 
@@ -55,9 +54,6 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const { email } = useAuth();
-  const initial = email?.[0]?.toUpperCase() ?? 'A';
-
   return (
     <aside className={cn(styles.sidebar, isOpen && styles.open)}>
       <div className={styles.logoArea}>
@@ -76,13 +72,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
         ))}
       </nav>
-
-      <div className={styles.footer}>
-        <div className={styles.userInfo}>
-          <div className={styles.avatar}>{initial}</div>
-          <span className={styles.email}>{email}</span>
-        </div>
-      </div>
     </aside>
   );
 }

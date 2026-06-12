@@ -22,7 +22,7 @@ export async function getOne(req: Request, res: Response, next: NextFunction): P
 
 export async function create(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const data = await service.createResponse(req.body, req.user!.id);
+    const data = await service.createResponse(req.body);
     res.status(201).json(data);
   } catch (err) {
     next(err);

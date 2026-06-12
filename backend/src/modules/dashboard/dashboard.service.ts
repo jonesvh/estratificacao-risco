@@ -1,30 +1,24 @@
-import { prisma } from '../../config/database';
+import { readDb } from '../../config/jsonDb';
 
 export async function getSummary() {
+  const db = readDb();
+
   const startOfMonth = new Date();
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
+  const startMs = startOfMonth.getTime();
 
-  const [
-    totalBeneficiaries,
-    activeBeneficiaries,
-    totalResponses,
-    responsesThisMonth,
-    riskDistribution,
-  ] = await Promise.all([
-    prisma.beneficiary.count(),
-    prisma.beneficiary.count({ where: { isActive: true } }),
-    prisma.questionnaireResponse.count(),
-    prisma.questionnaireResponse.count({ where: { appliedAt: { gte: startOfMonth } } }),
-    prisma.questionnaireResponse.groupBy({
-      by: ['riskLevel'],
-      _count: { id: true },
-    }),
-  ]);
+  const totalBeneficiaries = db.beneficiaries.length;
+  const activeBeneficiaries = db.beneficiaries.filter((b) => b.isActive).length;
+  const totalResponses = db.responses.length;
+  const responsesThisMonth = db.responses.filter(
+    (r) => new Date(r.appliedAt).getTime() >= startMs,
+  ).length;
 
-  const riskCounts = Object.fromEntries(
-    riskDistribution.map((r) => [r.riskLevel, r._count.id]),
-  );
+  const riskCounts: Record<string, number> = {};
+  for (const r of db.responses) {
+    riskCounts[r.riskLevel] = (riskCounts[r.riskLevel] ?? 0) + 1;
+  }
 
   return {
     beneficiaries: { total: totalBeneficiaries, active: activeBeneficiaries },
@@ -39,12 +33,21 @@ export async function getSummary() {
 }
 
 export async function getRecentResponses() {
-  return prisma.questionnaireResponse.findMany({
-    take: 10,
-    orderBy: { appliedAt: 'desc' },
-    include: {
-      beneficiary: { select: { id: true, name: true, cpf: true } },
-      questionnaire: { select: { id: true, title: true } },
-    },
-  });
+  const db = readDb();
+
+  return db.responses
+    .slice()
+    .sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime())
+    .slice(0, 10)
+    .map((r) => {
+      const beneficiary = db.beneficiaries.find((b) => b.id === r.beneficiaryId);
+      const questionnaire = db.questionnaires.find((q) => q.id === r.questionnaireId);
+      return {
+        ...r,
+        beneficiary: beneficiary
+          ? { id: beneficiary.id, name: beneficiary.name, cpf: beneficiary.cpf }
+          : null,
+        questionnaire: questionnaire ? { id: questionnaire.id, title: questionnaire.title } : null,
+      };
+    });
 }
