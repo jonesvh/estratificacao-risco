@@ -1,4 +1,4 @@
-import { readDb, writeDb, generateId, now, Question, QuestionOption, Dimension } from '../../config/jsonDb';
+import { readDb, writeDb, generateId, now, Question, QuestionOption, Dimension, Questionnaire } from '../../config/jsonDb';
 import { AppError } from '../../shared/errors/AppError';
 import { computeTotalMaxScore } from '../../shared/utils/risk';
 import {
@@ -310,7 +310,14 @@ export async function updateQuestionnaireMeta(id: string, data: UpdateQuestionna
   const idx = db.questionnaires.findIndex((q) => q.id === id);
   if (idx === -1) throw new AppError('Questionário não encontrado', 404);
 
-  db.questionnaires[idx] = { ...db.questionnaires[idx], ...data, updatedAt: now() };
+  const q = db.questionnaires[idx];
+  db.questionnaires[idx] = {
+    ...q,
+    title: data.title ?? q.title,
+    description: data.description !== undefined ? data.description : q.description,
+    isActive: data.isActive !== undefined ? data.isActive : q.isActive,
+    updatedAt: now(),
+  } as Questionnaire;
   writeDb(db);
   return getQuestionnaire(id);
 }

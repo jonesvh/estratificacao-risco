@@ -1,5 +1,9 @@
 @echo off
 setlocal enabledelayedexpansion
+
+REM ── Garantir que o CWD seja sempre a pasta do projeto ─────────────────────────
+cd /d "%~dp0"
+
 title ER - Estratificacao de Risco
 
 echo.
@@ -22,15 +26,12 @@ if errorlevel 1 (
 for /f "tokens=*" %%v in ('node --version') do echo [OK] Node.js %%v
 
 REM ── 2. Garantir pasta MEDPREV ─────────────────────────────────────────────────
-if not exist "MEDPREV" (
-    mkdir MEDPREV
-    echo [OK] Pasta MEDPREV criada.
-)
+if not exist "MEDPREV" mkdir "MEDPREV"
 
 REM ── 3. Instalar dependencias do backend ───────────────────────────────────────
 echo.
 echo [1/4] Instalando dependencias do backend...
-cd backend
+cd /d "%~dp0backend"
 call npm install --prefer-offline
 if errorlevel 1 (
     echo [ERRO] Falha ao instalar dependencias do backend.
@@ -45,12 +46,11 @@ if errorlevel 1 (
     echo [ERRO] Falha na compilacao do backend.
     pause & exit /b 1
 )
-cd ..
 
 REM ── 5. Instalar dependencias e compilar o frontend ───────────────────────────
 echo.
 echo [3/4] Instalando dependencias do frontend...
-cd frontend
+cd /d "%~dp0frontend"
 call npm install --prefer-offline
 if errorlevel 1 (
     echo [ERRO] Falha ao instalar dependencias do frontend.
@@ -64,9 +64,9 @@ if errorlevel 1 (
     echo [ERRO] Falha na compilacao do frontend.
     pause & exit /b 1
 )
-cd ..
 
 REM ── 6. Inicializar banco de dados ─────────────────────────────────────────────
+cd /d "%~dp0"
 if not exist "MEDPREV\db.json" (
     echo.
     echo [DB] Criando banco de dados inicial...
@@ -93,12 +93,11 @@ echo  ================================================
 echo.
 
 set PORT=6001
-set JSON_DB_PATH=..\MEDPREV\db.json
-set FRONTEND_DIST_PATH=..\frontend\dist
+set "JSON_DB_PATH=%~dp0MEDPREV\db.json"
+set "FRONTEND_DIST_PATH=%~dp0frontend\dist"
 set NODE_ENV=production
 set CORS_ORIGIN=http://192.168.1.250:6001
 set LOG_LEVEL=info
 
-cd backend
+cd /d "%~dp0backend"
 node dist\main.js
-cd ..

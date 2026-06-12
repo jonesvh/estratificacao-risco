@@ -1,4 +1,4 @@
-import { readDb, writeDb, generateId, now } from '../../config/jsonDb';
+import { readDb, writeDb, generateId, now, Gender, Beneficiary } from '../../config/jsonDb';
 import { AppError } from '../../shared/errors/AppError';
 import { parsePagination, toPaginatedResult } from '../../shared/utils/pagination';
 import {
@@ -77,7 +77,7 @@ export async function createBeneficiary(data: CreateBeneficiaryInput) {
     name: data.name,
     cpf: data.cpf,
     birthDate: data.birthDate,
-    gender: (data.gender ?? null) as string | null,
+    gender: (data.gender ?? null) as Gender | null,
     phone: data.phone ?? null,
     email: data.email ?? null,
     planCode: data.planCode ?? null,
@@ -103,7 +103,19 @@ export async function updateBeneficiary(id: string, data: UpdateBeneficiaryInput
     if (conflict) throw new AppError('CPF já utilizado por outro beneficiário', 409);
   }
 
-  const updated = { ...db.beneficiaries[idx], ...data, updatedAt: now() };
+  const updated: Beneficiary = {
+    ...db.beneficiaries[idx],
+    name: data.name ?? db.beneficiaries[idx].name,
+    cpf: data.cpf ?? db.beneficiaries[idx].cpf,
+    birthDate: data.birthDate ?? db.beneficiaries[idx].birthDate,
+    gender: data.gender !== undefined ? data.gender : db.beneficiaries[idx].gender,
+    phone: data.phone !== undefined ? data.phone : db.beneficiaries[idx].phone,
+    email: data.email !== undefined ? (data.email ?? null) : db.beneficiaries[idx].email,
+    planCode: data.planCode !== undefined ? data.planCode : db.beneficiaries[idx].planCode,
+    municipio: data.municipio !== undefined ? data.municipio : db.beneficiaries[idx].municipio,
+    estado: data.estado !== undefined ? data.estado : db.beneficiaries[idx].estado,
+    updatedAt: now(),
+  };
   db.beneficiaries[idx] = updated;
   writeDb(db);
   return updated;
