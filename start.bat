@@ -84,17 +84,10 @@ REM ── 7. Certificado SSL ────────────────�
 if not exist "ssl\cert.pem" (
     echo.
     echo [SSL] Gerando certificado autoassinado...
-    mkdir ssl 2>nul
-    openssl req -x509 -newkey rsa:2048 ^
-        -keyout ssl\key.pem -out ssl\cert.pem ^
-        -days 825 -nodes ^
-        -subj "/CN=192.168.1.250" ^
-        -addext "subjectAltName=IP:192.168.1.250,IP:127.0.0.1"
+    node backend\scripts\generate-cert.js
     if errorlevel 1 (
-        echo [AVISO] openssl nao encontrado. Servidor iniciara em HTTP.
-        echo         Instale o Git for Windows ou OpenSSL para habilitar HTTPS.
-    ) else (
-        echo [SSL] Certificado gerado com sucesso ^(valido por 825 dias^).
+        echo [ERRO] Falha ao gerar certificado SSL.
+        pause & exit /b 1
     )
 ) else (
     echo [SSL] Certificado existente encontrado.
