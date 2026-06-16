@@ -15,6 +15,9 @@ build/
 # JSON database (contains real data, must not be committed)
 MEDPREV/db.json
 
+# SSL certificates (gerados localmente, nao versionar)
+ssl/
+
 # Logs
 *.log
 logs/
