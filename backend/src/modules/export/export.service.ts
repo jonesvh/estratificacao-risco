@@ -76,13 +76,13 @@ export async function streamResponsesXlsx(filters: ExportFilters, res: Response)
 
   const baseHeaders = [
     'Beneficiário', 'CPF', 'Questionário', 'Data Aplicação',
-    'Pontuação Total', 'Classificação de Risco', 'Observações',
+    'Pontuação Total', 'Classificação de Risco', 'Observações', 'Medicamentos',
   ];
   const baseKeys = [
     'beneficiaryName', 'cpf', 'questionnaire', 'appliedAt',
-    'totalScore', 'riskLevel', 'notes',
+    'totalScore', 'riskLevel', 'notes', 'medicacoes',
   ];
-  const baseWidths = [30, 14, 35, 20, 16, 22, 40];
+  const baseWidths = [30, 14, 35, 20, 16, 22, 40, 50];
 
   const dynamicHeaders = questionColumns.map((q) => q.text);
   const dynamicKeys    = questionColumns.map((_, i) => `q${i}`);
@@ -114,6 +114,7 @@ export async function streamResponsesXlsx(filters: ExportFilters, res: Response)
       totalScore: r.totalScore,
       riskLevel: RISK_LABELS[r.riskLevel],
       notes: r.notes ?? '',
+      medicacoes: r.medicacoes ?? '',
     };
 
     const answerMap: Record<string, string> = {};
